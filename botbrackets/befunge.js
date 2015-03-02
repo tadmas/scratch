@@ -4,6 +4,7 @@ var $1 = { Seed: 5 };
 var $2 = { Seed: 12 };
 var $Score1 = 15;
 var $Score2 = 30;
+var debug = false;
 
 ExecuteScript([
 '>25*"!dlrow ,olleH":v',
@@ -33,6 +34,15 @@ ExecuteScript([
 /* Low Seed Wins    */ ExecuteScript(['2c[Seed]1c[Seed]-.@']);
 /* Split the Middle */ ExecuteScript(['3cn.67+,55+,4cn.@']); // not actually split the middle due to division
 
+// Test loop with single property name.
+//debug = true;
+ExecuteScript([
+'v   v c2 -1  <    ',
+'>11c>[Seed]~:|    ',
+'             >$-.@',
+]);
+
+
 /*
 
 Language additions:
@@ -49,6 +59,21 @@ n = push current_object (converted to an integer) onto stack
 [...] = read text between [] like "", then push current_object[text] onto stack
 {...} = read text between {} like "", then set current_object = current_object[text]
 
+~ = synonym for \\ since that takes up two characters in JS string literals
+
+*/
+
+/*
+
+         1         2         3         4         5         6         7         8
+12345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+
+Process for specifying the property name once:
+
+        v c2    -1  <
+   1 1c > [Seed] ~: |
+                    @
 
 */
 
@@ -85,6 +110,7 @@ function CreateInterpreter(src) {
 			case '%': stack.push(b % a); break;
 			case '`': stack.push((b > a) ? 1 : 0); break;
 			case '\\': stack.push(a); stack.push(b); break;
+			case '~': stack.push(a); stack.push(b); break; // synonym for backslash
 			case 'g': stack.push(playfieldAt(a, b).charCodeAt(0)); break;
 		}
 	};
@@ -113,11 +139,12 @@ function CreateInterpreter(src) {
 	var playfieldAtIP = function() { return playfieldAt(ipY, ipX); };
 	var stepNext = function(output) {
 		var instruction = playfieldAtIP();
+		if (debug) print(instruction + " @ " + ipX + "," + ipY + " going " + direction + " with stack " + stack.toString());
 		switch (instruction) {
 			case '0': case '1': case '2': case '3': case '4': case '5': case '6':
 			case '7': case '8': case '9': stack.push(+instruction); break;
 			case '+': case '-': case '*': case '/': case '%': case '`': case '\\':
-			case 'g': binaryOp(instruction); break;
+			case 'g': case '~': binaryOp(instruction); break;
 			case 'p': put(); break;
 			case '!': stack.push((stack.pop() == 0) ? 1 : 0); break;
 			case '>': case '<': case 'v': case '^': direction = instruction; break;
@@ -179,6 +206,7 @@ function CreateStack() {
 	return {
 		pop: function() { return (size > 0) ? items[--size] : 0; },
 		peek: function() { return (size > 0) ? items[size-1] : 0; },
-		push: function(item) { items[size++] = item; }
+		push: function(item) { items[size++] = item; },
+		toString: function() { return "" + items.slice(0, size); }
 	};
 }
