@@ -1,3 +1,10 @@
+// for testing
+var $Round = 1;
+var $1 = { Seed: 5 };
+var $2 = { Seed: 12 };
+var $Score1 = 15;
+var $Score2 = 30;
+
 ExecuteScript([
 '>25*"!dlrow ,olleH":v',
 '                 v:,_@',
@@ -13,12 +20,39 @@ ExecuteScript([
 '"<@_ #! #: #,<*2-1*92,*25,+*92*4*55.0'
 ]);
 
-ExecuteScript([
+/*ExecuteScript([
 '2>:3g" "-!v\  g30          <',
 ' |!`"O":+1_:.:03p>03g+:"O"`|',
 ' @               ^  p3\" ":<',
 '2 234567890123456789012345678901234567890123456789012345678901234567890123456789'
-]);
+]);*/
+
+
+// Test that "current object" functionality works.
+/* High Seed Wins   */ ExecuteScript(['1c[Seed]2c[Seed]-.@']);
+/* Low Seed Wins    */ ExecuteScript(['2c[Seed]1c[Seed]-.@']);
+/* Split the Middle */ ExecuteScript(['3cn.67+,55+,4cn.@']); // not actually split the middle due to division
+
+/*
+
+Language additions:
+
+c = pop A off stack and load "current object" based on A:
+	0 = $Round
+	1 = $1
+	2 = $2
+	3 = $Score1
+	4 = $Score2
+	other = undefined behavior
+
+n = push current_object (converted to an integer) onto stack
+[...] = read text between [] like "", then push current_object[text] onto stack
+{...} = read text between {} like "", then set current_object = current_object[text]
+
+
+*/
+
+
 
 function ExecuteScript(src) {
 	var script = CreateInterpreter(src);
@@ -30,6 +64,7 @@ function CreateInterpreter(src) {
 	var ipX = 0, ipY = 0;
 	var direction = '>';
 	var stack = CreateStack();
+	var curObj = null;
 	
 	var moveIP = function() {
 		switch (direction) {
@@ -52,6 +87,17 @@ function CreateInterpreter(src) {
 			case '\\': stack.push(a); stack.push(b); break;
 			case 'g': stack.push(playfieldAt(a, b).charCodeAt(0)); break;
 		}
+	};
+	var slurp = function() {
+		var untilChars = Array.prototype.slice.call(arguments);
+		var s = "";
+		moveIP();
+		while (untilChars.indexOf(playfieldAtIP()) < 0)
+		{
+			s += playfieldAtIP();
+			moveIP();
+		}
+		return s;
 	};
 	var put = function() {
 		var a = stack.pop();
@@ -88,6 +134,11 @@ function CreateInterpreter(src) {
 			case ',': output.push(String.fromCharCode(stack.pop())); break;
 			case '.': output.push(stack.pop().toString()); break;
 			case ' ': /* no-op */ break;
+			/* BOTBRACKETS-SPECIFIC EXTENSIONS */
+			case 'c': curObj = [$Round,$1,$2,$Score1,$Score2][stack.pop()]; break;
+			case 'n': stack.push(truncate(+curObj)); break;
+			case '[': case ']': stack.push(truncate(+curObj[slurp('[', ']')])); break;
+			case '{': case '}': curObj = curObj[slurp('{', '}')]; break;
 			default: throw 'Invalid instruction: ' + instruction;
 		}
 		moveIP();
