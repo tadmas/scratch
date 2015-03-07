@@ -30,16 +30,31 @@ ExecuteScript([
 
 
 // Test that "current object" functionality works.
-/* High Seed Wins   */ ExecuteScript(['1c[Seed]2c[Seed]-.@']);
-/* Low Seed Wins    */ ExecuteScript(['2c[Seed]1c[Seed]-.@']);
-/* Split the Middle */ ExecuteScript(['3cn.67+,55+,4cn.@']); // not actually split the middle due to division
+/* High Seed Wins   */ print("High Seed"); ExecuteScript(['1c[Seed]2c[Seed]-.@']);
+/* Low Seed Wins    */ print("Low Seed");  ExecuteScript(['2c[Seed]1c[Seed]-.@']);
+/* Split the Middle */ print("Scores");    ExecuteScript(['3cn.67+,55+,4cn.@']); // not actually split the middle due to division
 
 // Test loop with single property name.
 //debug = true;
+print("High Seed with loop");
 ExecuteScript([
 'v   v c2 -1  <    ',
 '>11c>[Seed]~:|    ',
 '             >$-.@',
+]);
+
+print("Absolute value of seed difference");
+ExecuteScript([
+' v   v c2 -1  <      >   v   ',
+' >11c>[Seed]~:|>$-:0`|   >.@ ',
+'              >^     >0~-^   ',
+]);
+
+print("Bail early if seed difference > 12");
+ExecuteScript([
+' v   v c2 -1  <       >   v    @         ',
+' >11c>[Seed]~:|>$-::0`|   >66+`|         ',
+'              >^      >0~-^    >$"KO",,@ ',
 ]);
 
 
@@ -75,13 +90,33 @@ Process for specifying the property name once:
    1 1c > [Seed] ~: |
                     @
 
+Bail out early if the seed difference is too high (13?)
+
+Absolute value:
+
+  v     v c2     -1 <          >       v
+  >1 1c > [Seed] ~: |> $ - :0` |
+                    >^         > 0 ~ - > .@
+
+Add comparison:
+
+  v     v c2     -1 <          >       v
+  >1 1c > [Seed] ~: |> $ - :0` |             > "Bail",,,,@
+                    >^         > 0 ~ - > 66+`|
+                                             > "OK",,@
+
 */
 
 
 
 function ExecuteScript(src) {
 	var script = CreateInterpreter(src);
-	print(script.execute());
+	var results = script.execute();
+	print(results.output);
+	if (results.value) {
+		print("Returned: " + results.value);
+		print();
+	}
 }
 
 function CreateInterpreter(src) {
@@ -175,7 +210,7 @@ function CreateInterpreter(src) {
 		execute: function() {
 			var output = [];
 			while (stepNext(output));
-			return output.join('');
+			return { output: output.join(''), value: stack.pop() };
 		}
 	};
 }
