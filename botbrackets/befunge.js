@@ -1,9 +1,9 @@
 // for testing
-var $Round = 1;
-var $1 = { Seed: 5 };
-var $2 = { Seed: 12 };
-var $Score1 = 15;
-var $Score2 = 30;
+var $Round = 4;
+var $1 = { Seed: 6, W:23,FGM:887,TRB:1272,OppAST:346,OppFTA:765 };
+var $2 = { Seed: 12,W:26,FGM:746,TRB:1027,OppAST:320,OppFTA:565 };
+var $Score1 = 70;
+var $Score2 = 105;
 var debug = false;
 
 ExecuteScript([
@@ -57,6 +57,19 @@ ExecuteScript([
 '              >^      >0~-^    >$"KO",,@ ',
 ]);
 
+print("Insane calculation - should be 15127");
+//debug = true;
+ExecuteScript([
+'v  v1 ,*59 <v        -1 ~       < ',
+'>12>c > 05#^># :# #- #1 v#< >$-@^ ',
+'   v<   v<   v<   v<    v ^_^#< ^ ',
+'    |-4:<|-3:<|-2:<|-1:<_$:.~:^ ^ ',
+'              >  v > ~789*+[W]*+^ ',
+'         >      v> ~579*+[FGM]*-^ ',
+'    >          v>  ~468*+[TRB]*-^ ',
+'   >          v>  ~79*[OppAST]*+^ ',
+'              > ~546*+[OppFTA]*+^ '
+]);
 
 /*
 
@@ -104,6 +117,62 @@ Add comparison:
   >1 1c > [Seed] ~: |> $ - :0` |             > "Bail",,,,@
                     >^         > 0 ~ - > 66+`|
                                              > "OK",,@
+
+
+Algorithm for this year:
+
+if (Math.abs($1.Seed - $2.Seed) > 12)
+  return $2.Seed - $1.Seed;
+
+return 29 * ($2["OppFTA"] - $1["OppFTA"]) +
+       -52 * ($2["TRB"] - $1["TRB"]) +
+       63 * ($2["OppAST"] - $1["OppAST"]) +
+       79 * ($2["W"] - $1["W"]) +
+       -68 * ($2["FGM"] - $1["FGM"]);
+
+Here comes the insanity:
+
+     v c1 <v        -1 ~       <
+1 2c > 05#^># :# #- #1 v#< >$-@^
+  v<   v<   v<   v<    v ^_^#< ^
+   |-4:<|-3:<|-2:<|-1:<_$:.~:^ ^
+             >  v > ~789*+[W]*+^
+        >      v> ~579*+[FGM]*-^
+   >          v>  ~468*+[TRB]*-^
+  >          v>  ~79*[OppAST]*+^
+             > ~546*+[OppFTA]*+^
+
+
+1	[CTR=1]
+2c	[CTR]			Cur = $2
+START EXPR:
+05	[CTR, Acc=0, N=5]
+START LOOP:
+:	[CTR, Acc, N, N]
+_	[CTR, Acc, N]		if N = 0 go right, else go left
+LEFT(N>0):
+:	[CTR, Acc, N, N]
+x-	[CTR, Acc, N, N-x]
+|	[CTR, Acc, N]		if N = x go down, else go up
+BRANCH:
+~	[CTR, N, Acc]
+Calc	[CTR, N, NewAcc]
+~	[CTR, Acc, N]
+1-	[CTR, Acc, N-1]		go back to START LOOP
+RIGHT(N=0):
+$	[CTR, Acc]
+:.	[CTR, Acc]		print Acc
+~	[Acc, CTR]
+:	[Acc, CTR, CTR]
+_	[Acc, CTR]		if CTR = 0 go right, else go left
+LEFT(CTR=1):
+1-	[Acc$2, CTR=0]
+1c	[Acc$2, CTR]		Cur = $1
+>				go back to START EXPR
+RIGHT(CTR=0):
+	[Acc$2, Acc$1, CTR]
+$	[Acc$2, Acc$1]
+-	[Acc$2-Acc$1]		@ -> return this
 
 */
 
